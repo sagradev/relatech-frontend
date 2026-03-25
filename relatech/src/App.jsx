@@ -65,7 +65,7 @@ const INITIAL_MASKS = [
 // ── buildOutput ───────────────────────────────────────────────────────────────
 function buildOutput(mask, values) {
   let r = mask.template;
-  mask.fields.forEach(f => { r = r.replaceAll(`{${f.label}}`, values[f.id] || `[${f.label}]`); });
+  mask.fields.forEach(f => { r = r.replaceAll(`{${f.label}}`, values[f.label] || `[${f.label}]`); });
   return r;
 }
 
@@ -108,9 +108,29 @@ function MaskModal({ mask, onSave, onClose }) {
   const [fields,   setFields]   = useState(mask.fields   || []);
   const [template, setTemplate] = useState(mask.template || "");
 
-  const addField  = () => setFields(p => [...p, { id:"f"+Date.now(), label:"Novo Campo", type:"text", placeholder:"" }]);
-  const updField  = (i,k,v) => setFields(p => p.map((f,idx) => idx===i ? {...f,[k]:v} : f));
-  const delField  = i => setFields(p => p.filter((_,idx) => idx!==i));
+  const addField = () => {
+    const newLabel = "Novo Campo";
+    setFields(p => [...p, { id:"f"+Date.now(), label:newLabel, type:"text", placeholder:"" }]);
+    setTemplate(t => t + (t ? "\n" : "") + `{${newLabel}}`);
+  };
+
+  const updField = (i, k, v) => {
+    if (k === "label") {
+      const oldLabel = fields[i].label;
+      setTemplate(t => t.replaceAll(`{${oldLabel}}`, `{${v}}`));
+    }
+    setFields(p => p.map((f,idx) => idx===i ? {...f,[k]:v} : f));
+  };
+
+  const delField = i => {
+    const label = fields[i].label;
+    setTemplate(t => t.split("\n").filter(line => !line.includes(`{${label}}`)).join("\n"));
+    setFields(p => p.filter((_,idx) => idx!==i));
+  };
+
+  const insertVar = (label) => {
+    setTemplate(t => t + (t && !t.endsWith("\n") ? "\n" : "") + `{${label}}`);
+  };
 
   const inp = {
     background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.15)",
@@ -142,13 +162,16 @@ function MaskModal({ mask, onSave, onClose }) {
         {fields.map((f,i) => (
           <div key={f.id} style={{background:"rgba(255,255,255,0.04)",borderRadius:"10px",
             padding:"12px",marginBottom:"10px",border:"1px solid rgba(255,255,255,0.07)"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 90px 36px",gap:"8px",marginBottom:"8px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 90px 36px 36px",gap:"8px",marginBottom:"8px"}}>
               <input value={f.label} onChange={e=>updField(i,"label",e.target.value)} style={inp} placeholder="Nome do campo"/>
               <select value={f.type} onChange={e=>updField(i,"type",e.target.value)} style={inp}>
                 <option value="text">Texto</option>
                 <option value="textarea">Área</option>
                 <option value="select">Seleção</option>
               </select>
+              <button onClick={()=>insertVar(f.label)} title="Inserir no template"
+                style={{background:"rgba(99,179,237,0.15)",border:"1px solid rgba(99,179,237,0.3)",
+                  color:"#63b3ed",borderRadius:"8px",cursor:"pointer",fontSize:"13px",fontFamily:"'IBM Plex Mono',monospace"}}>{"{ }"}</button>
               <button onClick={()=>delField(i)} style={{background:"rgba(239,68,68,0.15)",
                 border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",borderRadius:"8px",
                 cursor:"pointer",fontSize:"16px"}}>×</button>
@@ -510,8 +533,8 @@ export default function App() {
                   <label style={{display:"block",fontSize:"10px",fontWeight:"600",color:"#64748b",
                     marginBottom:"5px",fontFamily:"'IBM Plex Mono',monospace",
                     textTransform:"uppercase",letterSpacing:"0.05em"}}>{field.label}</label>
-                  <FieldInput field={field} value={values[field.id]}
-                    onChange={val=>setValues(v=>({...v,[field.id]:val}))}/>
+                  <FieldInput field={field} value={values[field.label]}
+                    onChange={val=>setValues(v=>({...v,[field.label]:val}))}/>
                 </div>
               ))}
 
