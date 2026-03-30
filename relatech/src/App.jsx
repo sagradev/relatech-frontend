@@ -493,8 +493,8 @@ return (
             <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>HOJE</span>
             <span style={{
               fontSize: "18px", fontWeight: "700", fontFamily: "'IBM Plex Mono',monospace",
-              color: counter > 0 ? activeMask.color : "#2d3748",
-              textShadow: counter > 0 ? `0 0 10px ${activeMask.color}88` : "none",
+              color: counter > 0 ? activeMask?.color : "#2d3748",
+              textShadow: counter > 0 ? `0 0 10px ${activeMask?.color}88` : "none",
               transition: "all 0.3s", lineHeight: 1,
             }}>{counter}</span>
             <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>
@@ -562,14 +562,14 @@ return (
 
       {/* ── Mobile inner nav ── */}
       <div className="mobile-only" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <button style={innerTabBtn(mobileTab === "form", activeMask.color)} onClick={() => setMobileTab("form")}>
+        <button style={innerTabBtn(mobileTab === "form", activeMask?.color)} onClick={() => setMobileTab("form")}>
           📝 Formulário
         </button>
-        <button style={innerTabBtn(mobileTab === "preview", activeMask.color)} onClick={() => setMobileTab("preview")}>
+        <button style={innerTabBtn(mobileTab === "preview", activeMask?.color)} onClick={() => setMobileTab("preview")}>
           👁 Preview
         </button>
-        <button style={innerTabBtn(mobileTab === "history", activeMask.color)} onClick={() => setMobileTab("history")}>
-          🕑 Histórico <Badge count={history.length} color={activeMask.color} />
+        <button style={innerTabBtn(mobileTab === "history", activeMask?.color)} onClick={() => setMobileTab("history")}>
+          🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
         </button>
       </div>
 
@@ -594,9 +594,9 @@ return (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{
                   width: "8px", height: "8px", borderRadius: "50%", display: "inline-block",
-                  background: activeMask.color, boxShadow: `0 0 8px ${activeMask.color}`
+                  background: activeMask?.color, boxShadow: `0 0 8px ${activeMask?.color}`
                 }} />
-                <h2 style={{ fontSize: "14px", fontWeight: "600" }}>{activeMask.emoji} {activeMask.name}</h2>
+                <h2 style={{ fontSize: "14px", fontWeight: "600" }}>{activeMask?.emoji} {activeMask?.name}</h2>
               </div>
               <div style={{ display: "flex", gap: "5px" }}>
                 <button onClick={() => setModalMask(activeMask)} title="Editar" style={{
@@ -612,7 +612,7 @@ return (
               </div>
             </div>
 
-            {activeMask.fields.map(field => (
+            {activeMask?.fields.map(field => (
               <div key={field.id} style={{ marginBottom: "14px" }}>
                 <label style={{
                   display: "block", fontSize: "10px", fontWeight: "600", color: "#64748b",
@@ -645,11 +645,11 @@ return (
 
           {/* right inner tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
-            <button style={innerTabBtn(rightTab === "preview", activeMask.color)}
+            <button style={innerTabBtn(rightTab === "preview", activeMask?.color)}
               onClick={() => setRightTab("preview")}>👁 Preview</button>
-            <button style={innerTabBtn(rightTab === "history", activeMask.color)}
+            <button style={innerTabBtn(rightTab === "history", activeMask?.color)}
               onClick={() => setRightTab("history")}>
-              🕑 Histórico <Badge count={history.length} color={activeMask.color} />
+              🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
             </button>
           </div>
 
@@ -667,7 +667,7 @@ return (
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                   <div style={{
                     width: "5px", height: "5px", borderRadius: "50%",
-                    background: activeMask.color, boxShadow: `0 0 5px ${activeMask.color}`
+                    background: activeMask?.color, boxShadow: `0 0 5px ${activeMask?.color}`
                   }} />
                   <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>ao vivo</span>
                 </div>
@@ -682,9 +682,9 @@ return (
                 marginTop: "14px", padding: "13px", borderRadius: "10px",
                 border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", transition: "all 0.2s",
                 fontFamily: "'Space Grotesk',sans-serif",
-                background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask.color},${activeMask.color}cc)`,
+                background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask?.color},${activeMask?.color}cc)`,
                 color: copied ? "#fff" : "#000",
-                boxShadow: copied ? "0 4px 18px rgba(16,185,129,0.4)" : `0 4px 18px ${activeMask.color}40`,
+                boxShadow: copied ? "0 4px 18px rgba(16,185,129,0.4)" : `0 4px 18px ${activeMask?.color}40`,
               }}>{copied ? "✓ Copiado!" : "⎘ Copiar Relato"}</button>
             </div>
           )}
@@ -714,7 +714,7 @@ return (
               padding: "13px", borderRadius: "10px", border: "none",
               cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "'Space Grotesk',sans-serif",
               transition: "all 0.2s",
-              background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask.color},${activeMask.color}cc)`,
+              background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask?.color},${activeMask?.color}cc)`,
               color: copied ? "#fff" : "#000",
             }}>{copied ? "✓ Copiado!" : "⎘ Copiar Relato"}</button>
           </div>
