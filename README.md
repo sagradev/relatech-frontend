@@ -1,120 +1,43 @@
-# 🎫 RelaTech - Frontend
+# 🎫 RelaTech — Frontend
 
-Aplicação desenvolvida em React para geração de relatos de atendimento técnico de forma rápida, padronizada e eficiente.
-
----
-
-## 🚀 Sobre o projeto
-
-O **RelaTech** é uma ferramenta que permite criar, editar e utilizar máscaras dinâmicas para gerar relatos técnicos automaticamente.
-
-Ideal para:
-
-* Suporte técnico
-* Analistas de redes
-* Help desk
-* Times de atendimento
-
----
+Interface web para montar e preencher máscaras de atendimento de suporte técnico.
 
 ## ✨ Funcionalidades
 
-* 📋 Criação de máscaras personalizadas
-* 🧩 Campos dinâmicos (texto, seleção, textarea)
-* ⚡ Geração automática de relatos
-* 📋 Copiar relato com um clique
-* 🕑 Histórico dos últimos relatos
-* 📊 Contador de relatos por dia
-* 📱 Interface responsiva (mobile + desktop)
+- Autenticação com login e cadastro
+- Máscaras salvas por usuário no banco de dados
+- Criação, edição e exclusão de máscaras personalizadas
+- Campos do tipo texto, área de texto e seleção
+- Preview em tempo real do relato gerado
+- Botão de copiar com feedback visual
+- Histórico dos últimos 3 relatos copiados
+- Contador de atendimentos do dia
+- Layout responsivo para desktop e mobile
 
----
+## 🛠️ Tecnologias
 
-## 🖥️ Tecnologias utilizadas
+- React 19
+- Vite
+- JWT para autenticação
+- Spring Boot 3.5 (backend)
+- PostgreSQL (banco de dados)
 
-* React
-* JavaScript (ES6+)
-* CSS-in-JS (inline styles)
-* LocalStorage
+## 🚀 Como rodar localmente
 
----
+### Pré-requisitos
+- Node.js 18+
+- Backend rodando ([relatech-backend](link-do-repo-backend))
 
-## 📂 Estrutura do projeto
-
-```
-src/
- ├── App.jsx
- ├── components/
- ├── styles/
- └── utils/
-```
-
----
-
-## ⚙️ Como rodar o projeto
-
-### 1. Clone o repositório
-
+### Instalação
 ```bash
 git clone https://github.com/seu-usuario/relatech-frontend.git
-```
-
-### 2. Acesse a pasta
-
-```bash
 cd relatech-frontend
-```
-
-### 3. Instale as dependências
-
-```bash
 npm install
-```
-
-### 4. Execute o projeto
-
-```bash
+echo "VITE_API_URL=http://localhost:8080/api" > .env
 npm run dev
 ```
 
----
+## 🌐 Deploy
 
-## 🧠 Como funciona
-
-O sistema utiliza máscaras com templates dinâmicos, onde os valores preenchidos pelo usuário substituem automaticamente os placeholders.
-
-Exemplo:
-
-```
-CLIENTE: {Nome do Cliente}
-PROBLEMA: {Problema Relatado}
-```
-
----
-
-## 🎯 Objetivo do projeto
-
-Este projeto foi desenvolvido com foco em:
-
-* Praticar desenvolvimento frontend com React
-* Criar uma solução real para uso no dia a dia
-* Evoluir para uma aplicação fullstack
-
----
-
-## 🔜 Próximos passos
-
-* Integração com backend (Spring Boot)
-* Persistência em banco de dados
-* Sistema de autenticação
-* Deploy em nuvem
-
----
-
-## 👨‍💻 Autor
-
-Gustavo Rodrigues Gutierrez
-
-* LinkedIn: [https://www.linkedin.com/in/gustavo-gutierrez-553913239/](https://www.linkedin.com/in/gustavo-gutierrez-553913239/)
-* GitHub: [https://github.com/sagradev](https://github.com/sagradev)
-
----
+- Frontend: [relatech.vercel.app](https://relatech.vercel.app)
+- Backend: Railway
