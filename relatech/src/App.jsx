@@ -314,7 +314,7 @@ function HistoryPanel({ history, masks, onCopy, onDelete }) {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
-export default function App({ onLogout }) {
+export default function App({ token, onLogout }) {
   const [masks, setMasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -329,35 +329,31 @@ export default function App({ onLogout }) {
 
 
   useEffect(() => {
-    const token = localStorage.getItem("relatech:token");
     if (!token) {
       onLogout();
       return;
     }
 
-    // Pequeno delay para garantir que o token está disponível
-    setTimeout(() => {
-      fetchMasks()
-        .then(data => {
-          if (data.length > 0) {
-            setMasks(data);
-            setActiveId(data[0].id);
-          } else {
-            Promise.all(INITIAL_MASKS.map(m => createMask(m)))
-              .then(created => {
-                setMasks(created);
-                setActiveId(created[0].id);
-              });
-          }
-        })
-        .catch(err => {
-          console.error("Erro ao carregar máscaras:", err);
-          onLogout();
-        })
-        .finally(() => setLoading(false));
-    }, 100);
+    fetchMasks(token)
+      .then(data => {
+        if (data.length > 0) {
+          setMasks(data);
+          setActiveId(data[0].id);
+        } else {
+          Promise.all(INITIAL_MASKS.map(m => createMask(m, token)))
+            .then(created => {
+              setMasks(created);
+              setActiveId(created[0].id);
+            });
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao carregar máscaras:", err);
+        onLogout();
+      })
+      .finally(() => setLoading(false));
   }, []);
-  
+
   useEffect(() => ls.set(SK_HISTORY, history), [history]);
 
   const activeMask = masks.find(m => m.id === activeId) || masks[0] || null;

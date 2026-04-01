@@ -12,11 +12,13 @@ function authHeaders() {
     };
 }
 
-export async function fetchMasks() {
+export async function fetchMasks(token) {
     const res = await fetch(`${BASE_URL}/masks`, {
-        headers: authHeaders(),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
     });
-
     // Token expirado ou inválido — força logout
     if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("relatech:token");

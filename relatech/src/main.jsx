@@ -4,28 +4,20 @@ import App from './App.jsx'
 import LoginPage from './LoginPage.jsx'
 
 function Root() {
-  const [auth, setAuth] = useState(() => {
-    const token = localStorage.getItem("relatech:token");
-    console.log(">>> Token no Root:", token);
-    console.log(">>> Auth:", !!token);
-    return !!token;
-  });
+  const [token, setToken] = useState(() => localStorage.getItem("relatech:token"));
 
-  console.log(">>> Renderizando Root, auth =", auth);
-
-  if (!auth) {
-    console.log(">>> Mostrando LoginPage");
-    return <LoginPage onLogin={() => setAuth(true)} />;
+  if (!token) {
+    return <LoginPage onLogin={(newToken) => setToken(newToken)} />;
   }
 
-  console.log(">>> Mostrando App");
-  return <App onLogout={() => {
-    localStorage.removeItem("relatech:token");
-    localStorage.removeItem("relatech:user");
-    setAuth(false);
-  }} />;
+  return <App
+    token={token}
+    onLogout={() => {
+      localStorage.removeItem("relatech:token");
+      localStorage.removeItem("relatech:user");
+      setToken(null);
+    }}
+  />;
 }
 
-createRoot(document.getElementById('root')).render(
-  <Root />
-)
+createRoot(document.getElementById('root')).render(<Root />)
