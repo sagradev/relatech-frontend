@@ -331,7 +331,7 @@ export default function App({ onLogout }) {
   useEffect(() => {
     const token = localStorage.getItem("relatech:token");
     if (!token) {
-      setLoading(false);
+      onLogout(); // redireciona para login imediatamente
       return;
     }
 
@@ -348,7 +348,10 @@ export default function App({ onLogout }) {
             });
         }
       })
-      .catch(err => console.error("Erro ao carregar máscaras:", err))
+      .catch(err => {
+        console.error("Erro ao carregar máscaras:", err);
+        onLogout(); // se der erro de auth, desloga
+      })
       .finally(() => setLoading(false));
   }, []);
 
