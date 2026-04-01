@@ -314,7 +314,7 @@ function HistoryPanel({ history, masks, onCopy, onDelete }) {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
-export default function App() {
+export default function App({ onLogout }) {
   const [masks, setMasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
