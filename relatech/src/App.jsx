@@ -331,30 +331,33 @@ export default function App({ onLogout }) {
   useEffect(() => {
     const token = localStorage.getItem("relatech:token");
     if (!token) {
-      onLogout(); // redireciona para login imediatamente
+      onLogout();
       return;
     }
 
-    fetchMasks()
-      .then(data => {
-        if (data.length > 0) {
-          setMasks(data);
-          setActiveId(data[0].id);
-        } else {
-          Promise.all(INITIAL_MASKS.map(m => createMask(m)))
-            .then(created => {
-              setMasks(created);
-              setActiveId(created[0].id);
-            });
-        }
-      })
-      .catch(err => {
-        console.error("Erro ao carregar máscaras:", err);
-        onLogout(); // se der erro de auth, desloga
-      })
-      .finally(() => setLoading(false));
+    // Pequeno delay para garantir que o token está disponível
+    setTimeout(() => {
+      fetchMasks()
+        .then(data => {
+          if (data.length > 0) {
+            setMasks(data);
+            setActiveId(data[0].id);
+          } else {
+            Promise.all(INITIAL_MASKS.map(m => createMask(m)))
+              .then(created => {
+                setMasks(created);
+                setActiveId(created[0].id);
+              });
+          }
+        })
+        .catch(err => {
+          console.error("Erro ao carregar máscaras:", err);
+          onLogout();
+        })
+        .finally(() => setLoading(false));
+    }, 100);
   }, []);
-
+  
   useEffect(() => ls.set(SK_HISTORY, history), [history]);
 
   const activeMask = masks.find(m => m.id === activeId) || masks[0] || null;

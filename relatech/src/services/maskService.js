@@ -1,15 +1,14 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const BASE_URL = "https://relatech-backend.onrender.com/api";
 
-// Pega o token salvo no localStorage
 function getToken() {
     return localStorage.getItem("relatech:token");
 }
 
-// Headers padrão com token
 function authHeaders() {
+    const token = getToken();
     return {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getToken()}`,
+        "Authorization": token ? `Bearer ${token}` : "",
     };
 }
 
