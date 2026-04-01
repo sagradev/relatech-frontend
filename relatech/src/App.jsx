@@ -319,15 +319,19 @@ export default function App({ onLogout }) {
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
+    const token = localStorage.getItem("relatech:token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     fetchMasks()
       .then(data => {
         if (data.length > 0) {
           setMasks(data);
           setActiveId(data[0].id);
         } else {
-          // Banco vazio — sobe as máscaras padrão
           Promise.all(INITIAL_MASKS.map(m => createMask(m)))
             .then(created => {
               setMasks(created);
@@ -338,7 +342,6 @@ export default function App({ onLogout }) {
       .catch(err => console.error("Erro ao carregar máscaras:", err))
       .finally(() => setLoading(false));
   }, []);
-
   const [values, setValues] = useState({});
   const [copied, setCopied] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
