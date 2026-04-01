@@ -320,123 +320,123 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
 
-useEffect(() => {
-  fetchMasks()
-    .then(data => {
-      if (data.length > 0) {
-        setMasks(data);
-        setActiveId(data[0].id);
-      } else {
-        // Banco vazio — sobe as máscaras padrão
-        Promise.all(INITIAL_MASKS.map(m => createMask(m)))
-          .then(created => {
-            setMasks(created);
-            setActiveId(created[0].id);
-          });
-      }
-    })
-    .catch(err => console.error("Erro ao carregar máscaras:", err))
-    .finally(() => setLoading(false));
-}, []);
+  useEffect(() => {
+    fetchMasks()
+      .then(data => {
+        if (data.length > 0) {
+          setMasks(data);
+          setActiveId(data[0].id);
+        } else {
+          // Banco vazio — sobe as máscaras padrão
+          Promise.all(INITIAL_MASKS.map(m => createMask(m)))
+            .then(created => {
+              setMasks(created);
+              setActiveId(created[0].id);
+            });
+        }
+      })
+      .catch(err => console.error("Erro ao carregar máscaras:", err))
+      .finally(() => setLoading(false));
+  }, []);
 
-const [values, setValues] = useState({});
-const [copied, setCopied] = useState(false);
-const [savedToast, setSavedToast] = useState(false);
-const [history, setHistory] = useState(() => ls.get(SK_HISTORY) || []);
-const [counter, setCounter] = useState(() => loadCounter());
-const [rightTab, setRightTab] = useState("preview"); // "preview" | "history"
-const [mobileTab, setMobileTab] = useState("form");    // "form" | "preview" | "history"
-const [modalMask, setModalMask] = useState(null);
+  const [values, setValues] = useState({});
+  const [copied, setCopied] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
+  const [history, setHistory] = useState(() => ls.get(SK_HISTORY) || []);
+  const [counter, setCounter] = useState(() => loadCounter());
+  const [rightTab, setRightTab] = useState("preview"); // "preview" | "history"
+  const [mobileTab, setMobileTab] = useState("form");    // "form" | "preview" | "history"
+  const [modalMask, setModalMask] = useState(null);
 
-useEffect(() => ls.set(SK_HISTORY, history), [history]);
+  useEffect(() => ls.set(SK_HISTORY, history), [history]);
 
-const activeMask = masks.find(m => m.id === activeId) || masks[0] || null;
-const output = activeMask ? buildOutput(activeMask, values) : "";
+  const activeMask = masks.find(m => m.id === activeId) || masks[0] || null;
+  const output = activeMask ? buildOutput(activeMask, values) : "";
 
-const doCopy = useCallback(async (text) => {
-  try { await navigator.clipboard.writeText(text); }
-  catch {
-    const el = document.createElement("textarea");
-    el.value = text; document.body.appendChild(el);
-    el.select(); document.execCommand("copy");
-    document.body.removeChild(el);
-  }
-}, []);
+  const doCopy = useCallback(async (text) => {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const el = document.createElement("textarea");
+      el.value = text; document.body.appendChild(el);
+      el.select(); document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+  }, []);
 
-const handleCopy = useCallback(async () => {
-  await doCopy(output);
-  setCopied(true);
-  setTimeout(() => setCopied(false), 2000);
-  setHistory(prev => {
-    const entry = { id: Date.now(), maskId: activeMask.id, text: output, time: timeStr() };
-    return [entry, ...prev].slice(0, 3);
+  const handleCopy = useCallback(async () => {
+    await doCopy(output);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    setHistory(prev => {
+      const entry = { id: Date.now(), maskId: activeMask.id, text: output, time: timeStr() };
+      return [entry, ...prev].slice(0, 3);
+    });
+    setCounter(c => incrementCounter(c));
+  }, [output, activeMask?.id, doCopy]);
+
+  const handleSwitchMask = id => { setActiveId(id); setValues({}); };
+
+  const handleSaveMask = async (mask) => {
+    if (!mask.id) {
+      const created = await createMask(mask);
+      setMasks(prev => [...prev, created]);
+      setActiveId(created.id);
+    } else {
+      const updated = await updateMask(mask.id, mask);
+      setMasks(prev => prev.map(m => m.id === mask.id ? updated : m));
+    }
+    setModalMask(null);
+    setValues({});
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2500);
+  };
+
+  const handleDeleteMask = async (id) => {
+    if (masks.length <= 1) return;
+    await deleteMask(id);
+    const next = masks.filter(m => m.id !== id);
+    setMasks(next);
+    setActiveId(next[0].id);
+    setValues({});
+  };
+  const handleReset = () => {
+    if (!window.confirm("Resetar para as máscaras padrão? Isso apaga todas as suas máscaras.")) return;
+    [SK_MASKS, SK_ACTIVE, SK_HISTORY, SK_COUNTER].forEach(k => ls.del(k));
+    setMasks(INITIAL_MASKS); setActiveId(INITIAL_MASKS[0].id);
+    setValues({}); setHistory([]); setCounter(0);
+  };
+
+  // shared button style for inner tabs
+  const innerTabBtn = (active, color) => ({
+    flex: 1, padding: "10px 8px", border: "none", cursor: "pointer",
+    background: active ? "rgba(255,255,255,0.05)" : "transparent",
+    color: active ? "#e2e8f0" : "#4a5568",
+    fontWeight: active ? "600" : "400",
+    fontFamily: "'Space Grotesk',sans-serif", fontSize: "13px",
+    borderBottom: active ? `2px solid ${color}` : "2px solid transparent",
+    transition: "all 0.15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
   });
-  setCounter(c => incrementCounter(c));
-}, [output, activeMask?.id, doCopy]);
 
-const handleSwitchMask = id => { setActiveId(id); setValues({}); };
-
-const handleSaveMask = async (mask) => {
-  if (!mask.id) {
-    const created = await createMask(mask);
-    setMasks(prev => [...prev, created]);
-    setActiveId(created.id);
-  } else {
-    const updated = await updateMask(mask.id, mask);
-    setMasks(prev => prev.map(m => m.id === mask.id ? updated : m));
-  }
-  setModalMask(null);
-  setValues({});
-  setSavedToast(true);
-  setTimeout(() => setSavedToast(false), 2500);
-};
-
-const handleDeleteMask = async (id) => {
-  if (masks.length <= 1) return;
-  await deleteMask(id);
-  const next = masks.filter(m => m.id !== id);
-  setMasks(next);
-  setActiveId(next[0].id);
-  setValues({});
-};
-const handleReset = () => {
-  if (!window.confirm("Resetar para as máscaras padrão? Isso apaga todas as suas máscaras.")) return;
-  [SK_MASKS, SK_ACTIVE, SK_HISTORY, SK_COUNTER].forEach(k => ls.del(k));
-  setMasks(INITIAL_MASKS); setActiveId(INITIAL_MASKS[0].id);
-  setValues({}); setHistory([]); setCounter(0);
-};
-
-// shared button style for inner tabs
-const innerTabBtn = (active, color) => ({
-  flex: 1, padding: "10px 8px", border: "none", cursor: "pointer",
-  background: active ? "rgba(255,255,255,0.05)" : "transparent",
-  color: active ? "#e2e8f0" : "#4a5568",
-  fontWeight: active ? "600" : "400",
-  fontFamily: "'Space Grotesk',sans-serif", fontSize: "13px",
-  borderBottom: active ? `2px solid ${color}` : "2px solid transparent",
-  transition: "all 0.15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-});
-
-const Badge = ({ count, color }) => count > 0 ? (
-  <span style={{
-    background: color, color: "#000", borderRadius: "10px",
-    padding: "0 6px", fontSize: "10px", fontWeight: "700", lineHeight: "18px"
-  }}>{count}</span>
-) : null;
+  const Badge = ({ count, color }) => count > 0 ? (
+    <span style={{
+      background: color, color: "#000", borderRadius: "10px",
+      padding: "0 6px", fontSize: "10px", fontWeight: "700", lineHeight: "18px"
+    }}>{count}</span>
+  ) : null;
 
 
-if (loading) return (
-  <div style={{ minHeight: "100vh", background: "#0a0f1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-    <div style={{ textAlign: "center", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>
-      <div style={{ fontSize: "32px", marginBottom: "12px" }}>🎫</div>
-      <p style={{ fontSize: "13px" }}>Carregando máscaras...</p>
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: "#0a0f1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>
+        <div style={{ fontSize: "32px", marginBottom: "12px" }}>🎫</div>
+        <p style={{ fontSize: "13px" }}>Carregando máscaras...</p>
+      </div>
     </div>
-  </div>
-);
+  );
 
-return (
-  <>
-    <style>{`
+  return (
+    <>
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body, #root { height: 100%; }
@@ -458,286 +458,300 @@ return (
         }
       `}</style>
 
-    <div style={{
-      minHeight: "100vh", background: "#0a0f1e",
-      fontFamily: "'Space Grotesk',sans-serif", color: "#e2e8f0",
-      display: "flex", flexDirection: "column"
-    }}>
-
-      {/* ── Header ── */}
-      <div className="app-header" style={{
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        padding: "13px 22px", display: "flex", alignItems: "center", gap: "10px",
-        background: "rgba(255,255,255,0.02)", flexWrap: "wrap"
+      <div style={{
+        minHeight: "100vh", background: "#0a0f1e",
+        fontFamily: "'Space Grotesk',sans-serif", color: "#e2e8f0",
+        display: "flex", flexDirection: "column"
       }}>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "9px", flexShrink: 0,
-            background: "linear-gradient(135deg,#00c2ff,#a855f7)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px"
-          }}>🎫</div>
-          <div>
-            <h1 style={{ fontSize: "15px", fontWeight: "700", letterSpacing: "-0.3px" }}>RelaTech</h1>
-            <p style={{ fontSize: "11px", color: "#374151", fontFamily: "'IBM Plex Mono',monospace" }}>Máscaras de Atendimento</p>
-          </div>
-        </div>
-
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          {/* Contador do dia */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "8px", padding: "5px 11px"
-          }}>
-            <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>HOJE</span>
-            <span style={{
-              fontSize: "18px", fontWeight: "700", fontFamily: "'IBM Plex Mono',monospace",
-              color: counter > 0 ? activeMask?.color : "#2d3748",
-              textShadow: counter > 0 ? `0 0 10px ${activeMask?.color}88` : "none",
-              transition: "all 0.3s", lineHeight: 1,
-            }}>{counter}</span>
-            <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>
-              {counter === 1 ? "relato" : "relatos"}
-            </span>
-          </div>
-
-          {/* Toast salvo */}
-          <div style={{
-            background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)",
-            borderRadius: "8px", padding: "5px 10px", fontSize: "12px", color: "#10b981",
-            fontFamily: "'IBM Plex Mono',monospace",
-            opacity: savedToast ? 1 : 0, transition: "opacity 0.3s", pointerEvents: "none",
-            whiteSpace: "nowrap",
-          }}>💾 Salvo</div>
-
-          <button onClick={handleReset}
-            style={{
-              background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#4a5568", borderRadius: "8px", padding: "5px 10px", cursor: "pointer",
-              fontSize: "12px", fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s", whiteSpace: "nowrap"
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)" }}
-            onMouseLeave={e => { e.currentTarget.style.color = "#4a5568"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)" }}>
-            ↺ Padrão
-          </button>
-        </div>
-      </div>
-      
-
-      {/* ── Mask tab bar ── */}
-      <div className="mask-tabs" style={{
-        display: "flex", gap: "5px", padding: "11px 22px 0",
-        overflowX: "auto", borderBottom: "1px solid rgba(255,255,255,0.07)",
-        background: "rgba(255,255,255,0.01)"
-      }}>
-        {masks.map(m => (
-          <button key={m.id} onClick={() => handleSwitchMask(m.id)} style={{
-            display: "flex", alignItems: "center", gap: "5px", padding: "7px 13px",
-            borderRadius: "10px 10px 0 0", border: "1px solid", cursor: "pointer",
-            borderBottom: activeId === m.id ? "1px solid #0a0f1e" : "1px solid rgba(255,255,255,0.07)",
-            background: activeId === m.id ? "#131a2e" : "transparent",
-            borderColor: activeId === m.id ? "rgba(255,255,255,0.12)" : "transparent",
-            color: activeId === m.id ? "#e2e8f0" : "#4a5568",
-            fontSize: "13px", fontWeight: activeId === m.id ? "600" : "400",
-            fontFamily: "'Space Grotesk',sans-serif", whiteSpace: "nowrap", transition: "all 0.15s",
-          }}>
-            <span style={{
-              width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
-              background: activeId === m.id ? m.color : "rgba(255,255,255,0.2)",
-              boxShadow: activeId === m.id ? `0 0 7px ${m.color}` : "none", transition: "all 0.2s"
-            }} />
-            {m.emoji} {m.name}
-          </button>
-        ))}
-        <button onClick={() => setModalMask({ name: "", emoji: "📄", color: "#00c2ff", fields: [], template: "" })}
-          style={{
-            padding: "7px 12px", borderRadius: "10px 10px 0 0", cursor: "pointer",
-            border: "1px solid rgba(255,255,255,0.08)", borderBottom: "1px solid transparent",
-            background: "transparent", color: "#4a5568", fontSize: "18px", lineHeight: 1, transition: "color 0.15s"
-          }}
-          onMouseEnter={e => e.target.style.color = "#e2e8f0"}
-          onMouseLeave={e => e.target.style.color = "#4a5568"}>+</button>
-      </div>
-
-      {/* ── Mobile inner nav ── */}
-      <div className="mobile-only" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <button style={innerTabBtn(mobileTab === "form", activeMask?.color)} onClick={() => setMobileTab("form")}>
-          📝 Formulário
-        </button>
-        <button style={innerTabBtn(mobileTab === "preview", activeMask?.color)} onClick={() => setMobileTab("preview")}>
-          👁 Preview
-        </button>
-        <button style={innerTabBtn(mobileTab === "history", activeMask?.color)} onClick={() => setMobileTab("history")}>
-          🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
-        </button>
-      </div>
-
-      {/* ── Main grid ── */}
-      <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", flex: 1, minHeight: 0 }}>
-
-        {/* LEFT — Fields */}
-        <div style={{
-          padding: "20px", borderRight: "1px solid rgba(255,255,255,0.07)",
-          overflowY: "auto", background: "#131a2e",
-          // mobile: hide when not on form tab
-          display: mobileTab !== "form" ? undefined : undefined,
-        }} className={mobileTab !== "form" ? "mobile-only" : ""}>
-          {/* on desktop always show; on mobile only when mobileTab==="form" */}
-          <div style={{ display: mobileTab !== "form" ? "none" : "block" }} className="mobile-only" />
-
-          <div id="fields-inner" style={{
-            display: "block",
-          }}>
-            {/* Mask label + actions */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{
-                  width: "8px", height: "8px", borderRadius: "50%", display: "inline-block",
-                  background: activeMask?.color, boxShadow: `0 0 8px ${activeMask?.color}`
-                }} />
-                <h2 style={{ fontSize: "14px", fontWeight: "600" }}>{activeMask?.emoji} {activeMask?.name}</h2>
-              </div>
-              <div style={{ display: "flex", gap: "5px" }}>
-                <button onClick={() => setModalMask(activeMask)} title="Editar" style={{
-                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#94a3b8", borderRadius: "7px", padding: "4px 8px", cursor: "pointer", fontSize: "12px"
-                }}>✏️</button>
-                {masks.length > 1 && (
-                  <button onClick={() => handleDeleteMask(activeMask.id)} title="Excluir" style={{
-                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-                    color: "#ef4444", borderRadius: "7px", padding: "4px 8px", cursor: "pointer", fontSize: "12px"
-                  }}>🗑️</button>
-                )}
-              </div>
-            </div>
-
-            {activeMask?.fields.map(field => (
-              <div key={field.id} style={{ marginBottom: "14px" }}>
-                <label style={{
-                  display: "block", fontSize: "10px", fontWeight: "600", color: "#64748b",
-                  marginBottom: "5px", fontFamily: "'IBM Plex Mono',monospace",
-                  textTransform: "uppercase", letterSpacing: "0.05em"
-                }}>{field.label}</label>
-                <FieldInput field={field} value={values[field.label]}
-                  onChange={val => setValues(v => ({ ...v, [field.label]: val }))} />
-              </div>
-            ))}
-
-            <button onClick={() => setValues({})} style={{
-              marginTop: "4px", width: "100%",
-              background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#4a5568", borderRadius: "8px", padding: "9px", cursor: "pointer",
-              fontSize: "12px", fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s"
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#94a3b8" }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#4a5568" }}>
-              ↺ Limpar campos
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT — Preview + History (desktop) */}
-        <div className="right-col" style={{
-          display: "flex", flexDirection: "column",
-          borderLeft: "1px solid rgba(255,255,255,0.07)", overflow: "hidden"
+        {/* ── Header ── */}
+        <div className="app-header" style={{
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          padding: "13px 22px", display: "flex", alignItems: "center", gap: "10px",
+          background: "rgba(255,255,255,0.02)", flexWrap: "wrap"
         }}>
 
-          {/* right inner tabs */}
-          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
-            <button style={innerTabBtn(rightTab === "preview", activeMask?.color)}
-              onClick={() => setRightTab("preview")}>👁 Preview</button>
-            <button style={innerTabBtn(rightTab === "history", activeMask?.color)}
-              onClick={() => setRightTab("history")}>
-              🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
-            </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px", height: "32px", borderRadius: "9px", flexShrink: 0,
+              background: "linear-gradient(135deg,#00c2ff,#a855f7)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px"
+            }}>🎫</div>
+            <div>
+              <h1 style={{ fontSize: "15px", fontWeight: "700", letterSpacing: "-0.3px" }}>RelaTech</h1>
+              <p style={{ fontSize: "11px", color: "#374151", fontFamily: "'IBM Plex Mono',monospace" }}>Máscaras de Atendimento</p>
+            </div>
           </div>
 
-          {/* Preview */}
-          {rightTab === "preview" && (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            {/* Contador do dia */}
             <div style={{
-              flex: 1, padding: "20px", display: "flex", flexDirection: "column",
-              background: "#0e1525", overflowY: "auto"
+              display: "flex", alignItems: "center", gap: "6px",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "8px", padding: "5px 11px"
             }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <p style={{
-                  fontSize: "10px", fontWeight: "600", color: "#64748b",
-                  fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.05em"
-                }}>Preview do Relato</p>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{
-                    width: "5px", height: "5px", borderRadius: "50%",
-                    background: activeMask?.color, boxShadow: `0 0 5px ${activeMask?.color}`
+              <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>HOJE</span>
+              <span style={{
+                fontSize: "18px", fontWeight: "700", fontFamily: "'IBM Plex Mono',monospace",
+                color: counter > 0 ? activeMask?.color : "#2d3748",
+                textShadow: counter > 0 ? `0 0 10px ${activeMask?.color}88` : "none",
+                transition: "all 0.3s", lineHeight: 1,
+              }}>{counter}</span>
+              <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>
+                {counter === 1 ? "relato" : "relatos"}
+              </span>
+            </div>
+
+            {/* Toast salvo */}
+            <div style={{
+              background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)",
+              borderRadius: "8px", padding: "5px 10px", fontSize: "12px", color: "#10b981",
+              fontFamily: "'IBM Plex Mono',monospace",
+              opacity: savedToast ? 1 : 0, transition: "opacity 0.3s", pointerEvents: "none",
+              whiteSpace: "nowrap",
+            }}>💾 Salvo</div>
+
+            <button onClick={handleReset}
+              style={{
+                background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#4a5568", borderRadius: "8px", padding: "5px 10px", cursor: "pointer",
+                fontSize: "12px", fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s", whiteSpace: "nowrap"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)" }}
+              onMouseLeave={e => { e.currentTarget.style.color = "#4a5568"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)" }}>
+              ↺ Padrão
+            </button>
+
+            <button
+              onClick={() => onLogout()}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#4a5568", borderRadius: "8px",
+                padding: "6px 10px", cursor: "pointer",
+                fontSize: "12px", fontFamily: "'IBM Plex Mono', monospace",
+                transition: "all 0.15s", whiteSpace: "nowrap"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "#4a5568"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+            >⎋ Sair</button>
+          </div>
+        </div>
+
+
+        {/* ── Mask tab bar ── */}
+        <div className="mask-tabs" style={{
+          display: "flex", gap: "5px", padding: "11px 22px 0",
+          overflowX: "auto", borderBottom: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(255,255,255,0.01)"
+        }}>
+          {masks.map(m => (
+            <button key={m.id} onClick={() => handleSwitchMask(m.id)} style={{
+              display: "flex", alignItems: "center", gap: "5px", padding: "7px 13px",
+              borderRadius: "10px 10px 0 0", border: "1px solid", cursor: "pointer",
+              borderBottom: activeId === m.id ? "1px solid #0a0f1e" : "1px solid rgba(255,255,255,0.07)",
+              background: activeId === m.id ? "#131a2e" : "transparent",
+              borderColor: activeId === m.id ? "rgba(255,255,255,0.12)" : "transparent",
+              color: activeId === m.id ? "#e2e8f0" : "#4a5568",
+              fontSize: "13px", fontWeight: activeId === m.id ? "600" : "400",
+              fontFamily: "'Space Grotesk',sans-serif", whiteSpace: "nowrap", transition: "all 0.15s",
+            }}>
+              <span style={{
+                width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
+                background: activeId === m.id ? m.color : "rgba(255,255,255,0.2)",
+                boxShadow: activeId === m.id ? `0 0 7px ${m.color}` : "none", transition: "all 0.2s"
+              }} />
+              {m.emoji} {m.name}
+            </button>
+          ))}
+          <button onClick={() => setModalMask({ name: "", emoji: "📄", color: "#00c2ff", fields: [], template: "" })}
+            style={{
+              padding: "7px 12px", borderRadius: "10px 10px 0 0", cursor: "pointer",
+              border: "1px solid rgba(255,255,255,0.08)", borderBottom: "1px solid transparent",
+              background: "transparent", color: "#4a5568", fontSize: "18px", lineHeight: 1, transition: "color 0.15s"
+            }}
+            onMouseEnter={e => e.target.style.color = "#e2e8f0"}
+            onMouseLeave={e => e.target.style.color = "#4a5568"}>+</button>
+        </div>
+
+        {/* ── Mobile inner nav ── */}
+        <div className="mobile-only" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <button style={innerTabBtn(mobileTab === "form", activeMask?.color)} onClick={() => setMobileTab("form")}>
+            📝 Formulário
+          </button>
+          <button style={innerTabBtn(mobileTab === "preview", activeMask?.color)} onClick={() => setMobileTab("preview")}>
+            👁 Preview
+          </button>
+          <button style={innerTabBtn(mobileTab === "history", activeMask?.color)} onClick={() => setMobileTab("history")}>
+            🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
+          </button>
+        </div>
+
+        {/* ── Main grid ── */}
+        <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", flex: 1, minHeight: 0 }}>
+
+          {/* LEFT — Fields */}
+          <div style={{
+            padding: "20px", borderRight: "1px solid rgba(255,255,255,0.07)",
+            overflowY: "auto", background: "#131a2e",
+            // mobile: hide when not on form tab
+            display: mobileTab !== "form" ? undefined : undefined,
+          }} className={mobileTab !== "form" ? "mobile-only" : ""}>
+            {/* on desktop always show; on mobile only when mobileTab==="form" */}
+            <div style={{ display: mobileTab !== "form" ? "none" : "block" }} className="mobile-only" />
+
+            <div id="fields-inner" style={{
+              display: "block",
+            }}>
+              {/* Mask label + actions */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{
+                    width: "8px", height: "8px", borderRadius: "50%", display: "inline-block",
+                    background: activeMask?.color, boxShadow: `0 0 8px ${activeMask?.color}`
                   }} />
-                  <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>ao vivo</span>
+                  <h2 style={{ fontSize: "14px", fontWeight: "600" }}>{activeMask?.emoji} {activeMask?.name}</h2>
+                </div>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <button onClick={() => setModalMask(activeMask)} title="Editar" style={{
+                    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#94a3b8", borderRadius: "7px", padding: "4px 8px", cursor: "pointer", fontSize: "12px"
+                  }}>✏️</button>
+                  {masks.length > 1 && (
+                    <button onClick={() => handleDeleteMask(activeMask.id)} title="Excluir" style={{
+                      background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                      color: "#ef4444", borderRadius: "7px", padding: "4px 8px", cursor: "pointer", fontSize: "12px"
+                    }}>🗑️</button>
+                  )}
                 </div>
               </div>
+
+              {activeMask?.fields.map(field => (
+                <div key={field.id} style={{ marginBottom: "14px" }}>
+                  <label style={{
+                    display: "block", fontSize: "10px", fontWeight: "600", color: "#64748b",
+                    marginBottom: "5px", fontFamily: "'IBM Plex Mono',monospace",
+                    textTransform: "uppercase", letterSpacing: "0.05em"
+                  }}>{field.label}</label>
+                  <FieldInput field={field} value={values[field.label]}
+                    onChange={val => setValues(v => ({ ...v, [field.label]: val }))} />
+                </div>
+              ))}
+
+              <button onClick={() => setValues({})} style={{
+                marginTop: "4px", width: "100%",
+                background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#4a5568", borderRadius: "8px", padding: "9px", cursor: "pointer",
+                fontSize: "12px", fontFamily: "'IBM Plex Mono',monospace", transition: "all 0.15s"
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#94a3b8" }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#4a5568" }}>
+                ↺ Limpar campos
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT — Preview + History (desktop) */}
+          <div className="right-col" style={{
+            display: "flex", flexDirection: "column",
+            borderLeft: "1px solid rgba(255,255,255,0.07)", overflow: "hidden"
+          }}>
+
+            {/* right inner tabs */}
+            <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
+              <button style={innerTabBtn(rightTab === "preview", activeMask?.color)}
+                onClick={() => setRightTab("preview")}>👁 Preview</button>
+              <button style={innerTabBtn(rightTab === "history", activeMask?.color)}
+                onClick={() => setRightTab("history")}>
+                🕑 Histórico <Badge count={history.length} color={activeMask?.color} />
+              </button>
+            </div>
+
+            {/* Preview */}
+            {rightTab === "preview" && (
+              <div style={{
+                flex: 1, padding: "20px", display: "flex", flexDirection: "column",
+                background: "#0e1525", overflowY: "auto"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <p style={{
+                    fontSize: "10px", fontWeight: "600", color: "#64748b",
+                    fontFamily: "'IBM Plex Mono',monospace", textTransform: "uppercase", letterSpacing: "0.05em"
+                  }}>Preview do Relato</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                    <div style={{
+                      width: "5px", height: "5px", borderRadius: "50%",
+                      background: activeMask?.color, boxShadow: `0 0 5px ${activeMask?.color}`
+                    }} />
+                    <span style={{ fontSize: "10px", color: "#4a5568", fontFamily: "'IBM Plex Mono',monospace" }}>ao vivo</span>
+                  </div>
+                </div>
+                <pre style={{
+                  flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "12px", padding: "16px", fontSize: "13px", lineHeight: "1.8", color: "#cbd5e1",
+                  fontFamily: "'IBM Plex Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-word",
+                  overflowY: "auto", minHeight: "140px"
+                }}>{output}</pre>
+                <button onClick={handleCopy} style={{
+                  marginTop: "14px", padding: "13px", borderRadius: "10px",
+                  border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", transition: "all 0.2s",
+                  fontFamily: "'Space Grotesk',sans-serif",
+                  background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask?.color},${activeMask?.color}cc)`,
+                  color: copied ? "#fff" : "#000",
+                  boxShadow: copied ? "0 4px 18px rgba(16,185,129,0.4)" : `0 4px 18px ${activeMask?.color}40`,
+                }}>{copied ? "✓ Copiado!" : "⎘ Copiar Relato"}</button>
+              </div>
+            )}
+
+            {/* History */}
+            {rightTab === "history" && (
+              <div style={{ flex: 1, background: "#0e1525", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <HistoryPanel history={history} masks={masks} onCopy={doCopy}
+                  onDelete={id => setHistory(h => h.filter(e => e.id !== id))} />
+              </div>
+            )}
+          </div>
+
+          {/* MOBILE — Preview panel */}
+          {mobileTab === "preview" && (
+            <div style={{
+              padding: "16px", display: "flex", flexDirection: "column",
+              background: "#0e1525", gridColumn: "1"
+            }}>
               <pre style={{
                 flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "12px", padding: "16px", fontSize: "13px", lineHeight: "1.8", color: "#cbd5e1",
+                borderRadius: "12px", padding: "14px", fontSize: "13px", lineHeight: "1.8", color: "#cbd5e1",
                 fontFamily: "'IBM Plex Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-word",
-                overflowY: "auto", minHeight: "140px"
+                overflowY: "auto", minHeight: "160px", marginBottom: "14px"
               }}>{output}</pre>
               <button onClick={handleCopy} style={{
-                marginTop: "14px", padding: "13px", borderRadius: "10px",
-                border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", transition: "all 0.2s",
-                fontFamily: "'Space Grotesk',sans-serif",
+                padding: "13px", borderRadius: "10px", border: "none",
+                cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "'Space Grotesk',sans-serif",
+                transition: "all 0.2s",
                 background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask?.color},${activeMask?.color}cc)`,
                 color: copied ? "#fff" : "#000",
-                boxShadow: copied ? "0 4px 18px rgba(16,185,129,0.4)" : `0 4px 18px ${activeMask?.color}40`,
               }}>{copied ? "✓ Copiado!" : "⎘ Copiar Relato"}</button>
             </div>
           )}
 
-          {/* History */}
-          {rightTab === "history" && (
-            <div style={{ flex: 1, background: "#0e1525", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* MOBILE — History panel */}
+          {mobileTab === "history" && (
+            <div style={{
+              background: "#0e1525", display: "flex", flexDirection: "column",
+              gridColumn: "1", minHeight: "300px"
+            }}>
               <HistoryPanel history={history} masks={masks} onCopy={doCopy}
                 onDelete={id => setHistory(h => h.filter(e => e.id !== id))} />
             </div>
           )}
+
         </div>
-
-        {/* MOBILE — Preview panel */}
-        {mobileTab === "preview" && (
-          <div style={{
-            padding: "16px", display: "flex", flexDirection: "column",
-            background: "#0e1525", gridColumn: "1"
-          }}>
-            <pre style={{
-              flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "12px", padding: "14px", fontSize: "13px", lineHeight: "1.8", color: "#cbd5e1",
-              fontFamily: "'IBM Plex Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-word",
-              overflowY: "auto", minHeight: "160px", marginBottom: "14px"
-            }}>{output}</pre>
-            <button onClick={handleCopy} style={{
-              padding: "13px", borderRadius: "10px", border: "none",
-              cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "'Space Grotesk',sans-serif",
-              transition: "all 0.2s",
-              background: copied ? "linear-gradient(135deg,#10b981,#059669)" : `linear-gradient(135deg,${activeMask?.color},${activeMask?.color}cc)`,
-              color: copied ? "#fff" : "#000",
-            }}>{copied ? "✓ Copiado!" : "⎘ Copiar Relato"}</button>
-          </div>
-        )}
-
-        {/* MOBILE — History panel */}
-        {mobileTab === "history" && (
-          <div style={{
-            background: "#0e1525", display: "flex", flexDirection: "column",
-            gridColumn: "1", minHeight: "300px"
-          }}>
-            <HistoryPanel history={history} masks={masks} onCopy={doCopy}
-              onDelete={id => setHistory(h => h.filter(e => e.id !== id))} />
-          </div>
-        )}
-
       </div>
-    </div>
 
-    {modalMask && (
-      <MaskModal mask={modalMask} onSave={handleSaveMask} onClose={() => setModalMask(null)} />
-    )}
-  </>
-);
+      {modalMask && (
+        <MaskModal mask={modalMask} onSave={handleSaveMask} onClose={() => setModalMask(null)} />
+      )}
+    </>
+  );
 };
 

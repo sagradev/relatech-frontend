@@ -17,10 +17,18 @@ export async function fetchMasks() {
     const res = await fetch(`${BASE_URL}/masks`, {
         headers: authHeaders(),
     });
+
+    // Token expirado ou inválido — força logout
+    if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("relatech:token");
+        localStorage.removeItem("relatech:user");
+        window.location.reload();
+        return [];
+    }
+
     if (!res.ok) throw new Error("Erro ao buscar máscaras");
     return res.json();
 }
-
 export async function createMask(mask) {
     const { id, fields, ...maskSemId } = mask;
     const fieldsSemId = (fields || []).map(({ id, ...field }) => field);
