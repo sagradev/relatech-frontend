@@ -25,3 +25,7 @@ function Root() {
     setAuth(false);
   }} />;
 }
+
+createRoot(document.getElementById('root')).render(
+  <Root />
+)
