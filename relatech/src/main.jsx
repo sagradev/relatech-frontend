@@ -1,8 +1,7 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import LoginPage from './LoginPage.jsx'
-import { isAuthenticated } from './services/authService.js'
 
 function Root() {
   const [auth, setAuth] = useState(() => {
@@ -20,7 +19,7 @@ function Root() {
     setAuth(false);
   }} />;
 }
-import { useState } from 'react'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Root />
