@@ -318,6 +318,15 @@ export default function App({ onLogout }) {
   const [masks, setMasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [values, setValues] = useState({});
+  const [copied, setCopied] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
+  const [history, setHistory] = useState(() => ls.get(SK_HISTORY) || []);
+  const [counter, setCounter] = useState(() => loadCounter());
+  const [rightTab, setRightTab] = useState("preview"); // "preview" | "history"
+  const [mobileTab, setMobileTab] = useState("form");    // "form" | "preview" | "history"
+  const [modalMask, setModalMask] = useState(null);
+
 
   useEffect(() => {
     const token = localStorage.getItem("relatech:token");
@@ -342,14 +351,6 @@ export default function App({ onLogout }) {
       .catch(err => console.error("Erro ao carregar máscaras:", err))
       .finally(() => setLoading(false));
   }, []);
-  const [values, setValues] = useState({});
-  const [copied, setCopied] = useState(false);
-  const [savedToast, setSavedToast] = useState(false);
-  const [history, setHistory] = useState(() => ls.get(SK_HISTORY) || []);
-  const [counter, setCounter] = useState(() => loadCounter());
-  const [rightTab, setRightTab] = useState("preview"); // "preview" | "history"
-  const [mobileTab, setMobileTab] = useState("form");    // "form" | "preview" | "history"
-  const [modalMask, setModalMask] = useState(null);
 
   useEffect(() => ls.set(SK_HISTORY, history), [history]);
 
