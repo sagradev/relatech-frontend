@@ -20,7 +20,7 @@ export default function LoginPage({ onLogin }) {
                 data = await register(name, email, password);
             }
             saveAuth(data.token, data.name, data.email);
-            onLogin();
+            onLogin(data.token);
         } catch (e) {
             setError(e.message);
         } finally {
